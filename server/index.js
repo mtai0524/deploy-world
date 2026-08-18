@@ -268,6 +268,51 @@ app.get("/api/sites/:provider", async (req, res, next) => {
   }
 });
 
+/**
+ * Xoá hẳn một site. Không hoàn tác được.
+ *
+ * Giao diện đã bắt gõ đúng tên, nhưng đó chỉ là lớp báo sớm. Server tự hỏi lại
+ * nhà cung cấp xem site mang id này thật sự tên gì rồi mới so — nếu tin id do
+ * client gửi, một lỗi phía client là xoá nhầm site khác.
+ */
+app.delete("/api/sites/:provider/:siteId", async (req, res, next) => {
+  try {
+    const { provider, siteId } = req.params;
+    const confirmName = String(req.query.confirmName || "").trim();
+    const providedKey = req.get("x-provider-key") || "";
+
+    if (!confirmName) {
+      throw new ValidationError("Thiếu tên xác nhận. Phải gõ đúng tên site mới xoá được.");
+    }
+
+    let key;
+    let actual;
+
+    if (provider === "netlify") {
+      key = requireKey(providedKey, "NETLIFY_TOKEN", "Netlify token");
+      actual = await netlify.getSite(key, siteId);
+    } else if (provider === "render") {
+      key = requireKey(providedKey, "RENDER_API_KEY", "Render API key");
+      actual = await render.getService(key, siteId);
+    } else {
+      throw new ValidationError(`Nhà cung cấp "${provider}" không hỗ trợ.`);
+    }
+
+    if (actual.name !== confirmName) {
+      throw new ValidationError(
+        `Tên xác nhận không khớp. Site này tên "${actual.name}", bạn gõ "${confirmName}". Không xoá gì cả.`
+      );
+    }
+
+    if (provider === "netlify") await netlify.deleteSite(key, siteId);
+    else await render.deleteService(key, siteId);
+
+    res.json({ ok: true, deleted: actual.name });
+  } catch (error) {
+    next(error);
+  }
+});
+
 /** Giao diện gọi liên tục endpoint này để theo dõi tiến độ build. */
 app.get("/api/deploy/:provider/:siteId/:deployId", async (req, res, next) => {
   try {

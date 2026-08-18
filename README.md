@@ -42,6 +42,11 @@ cung cấp đang chọn: tên, URL bấm được, trạng thái, thời điểm
 link tới dashboard. Danh sách tự tải khi đã có khoá, tự làm mới sau mỗi lần deploy
 thành công, và có nút Tải lại.
 
+Mỗi dòng có nút **xoá**. Vì xoá site không hoàn tác được, nó mở hộp xác nhận bắt
+gõ lại đúng tên site — và server **hỏi lại nhà cung cấp** xem site mang id đó thật
+sự tên gì rồi mới so, chứ không tin tên do giao diện gửi lên. Sai một ký tự là
+không xoá gì cả.
+
 Mỗi dòng có nhãn **public** hoặc **private**. Nhãn này không lấy từ trạng thái do
 nhà cung cấp báo — `ready` chỉ nói deploy đã xong, không nói khách xem được. Server
 tự mở từng URL **không kèm token**, đúng như một người lạ, rồi báo lại kết quả thật.

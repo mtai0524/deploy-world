@@ -132,6 +132,12 @@ export async function getDeploy(key, serviceId, deployId) {
   };
 }
 
+/** Xoá service. Không hoàn tác được — tầng gọi phải xác nhận trước. */
+export async function deleteService(key, serviceId) {
+  await rd(key, `/services/${serviceId}`, { method: "DELETE" });
+  return { deleted: true };
+}
+
 export async function getService(key, serviceId) {
   const service = await rd(key, `/services/${serviceId}`);
   return {

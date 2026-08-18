@@ -185,6 +185,12 @@ export async function getSite(token, siteId) {
   };
 }
 
+/** Xoá site. Không hoàn tác được — tầng gọi phải xác nhận trước. */
+export async function deleteSite(token, siteId) {
+  await nf(token, `/sites/${siteId}`, { method: "DELETE" });
+  return { deleted: true };
+}
+
 export async function getDeploy(token, deployId) {
   const deploy = await nf(token, `/deploys/${deployId}`);
   return {

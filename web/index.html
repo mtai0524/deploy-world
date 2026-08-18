@@ -247,6 +247,37 @@
     </div>
   </div>
 
+  <!-- Xác nhận xoá site -->
+  <div class="modal" id="delete-modal" hidden role="dialog" aria-modal="true"
+       aria-labelledby="delete-title">
+    <div class="modal-backdrop" data-close-delete></div>
+
+    <div class="modal-box modal-box-sm">
+      <h3 id="delete-title">Xoá site vĩnh viễn</h3>
+      <p class="hint warn">
+        Không hoàn tác được. Toàn bộ nội dung và lịch sử deploy của site này sẽ mất,
+        và tên site sẽ được trả lại cho người khác đăng ký.
+      </p>
+
+      <p class="delete-target">
+        <strong id="delete-name"></strong>
+        <span id="delete-url"></span>
+      </p>
+
+      <div class="field">
+        <label for="delete-confirm">Gõ đúng tên site để xác nhận</label>
+        <input type="text" id="delete-confirm" autocomplete="off" spellcheck="false">
+      </div>
+
+      <p class="hint warn" id="delete-error" hidden></p>
+
+      <div class="modal-actions-row">
+        <button type="button" class="btn btn-ghost" data-close-delete>Huỷ</button>
+        <button type="button" class="btn btn-danger" id="delete-go" disabled>Xoá vĩnh viễn</button>
+      </div>
+    </div>
+  </div>
+
   <script src="formatter.js"></script>
   <script src="app.js"></script>
 </body>

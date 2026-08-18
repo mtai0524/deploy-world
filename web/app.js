@@ -62,6 +62,12 @@
     refreshSites: document.getElementById("refresh-sites"),
     sitesNote: document.getElementById("sites-note"),
     sitesList: document.getElementById("sites-list"),
+    deleteModal: document.getElementById("delete-modal"),
+    deleteName: document.getElementById("delete-name"),
+    deleteUrl: document.getElementById("delete-url"),
+    deleteConfirm: document.getElementById("delete-confirm"),
+    deleteError: document.getElementById("delete-error"),
+    deleteGo: document.getElementById("delete-go"),
   };
 
   /* ------------------------- Tiện ích chung ------------------------- */
@@ -627,10 +633,85 @@
         meta.appendChild(dashLink);
       }
 
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "linkish linkish-danger";
+      del.textContent = "xoá";
+      del.addEventListener("click", function () {
+        openDeleteModal(site);
+      });
+      meta.appendChild(document.createTextNode(" · "));
+      meta.appendChild(del);
+
       li.appendChild(main);
       li.appendChild(meta);
       el.sitesList.appendChild(li);
     });
+  }
+
+  /* --------------------------- Xoá site ----------------------------- */
+
+  var pendingDelete = null;
+
+  function openDeleteModal(site) {
+    pendingDelete = site;
+
+    el.deleteName.textContent = site.name;
+    el.deleteUrl.textContent = site.url || "";
+    el.deleteConfirm.value = "";
+    el.deleteError.hidden = true;
+    el.deleteGo.disabled = true;
+
+    el.deleteModal.hidden = false;
+    document.body.classList.add("modal-open");
+    el.deleteConfirm.focus();
+  }
+
+  function closeDeleteModal() {
+    el.deleteModal.hidden = true;
+    document.body.classList.remove("modal-open");
+    pendingDelete = null;
+  }
+
+  function runDelete() {
+    if (!pendingDelete) return;
+
+    var provider = currentProvider();
+    var key = PROVIDERS[provider].key();
+
+    el.deleteGo.disabled = true;
+    el.deleteGo.textContent = "Đang xoá...";
+    el.deleteError.hidden = true;
+
+    fetch(
+      "/api/sites/" + provider + "/" + encodeURIComponent(pendingDelete.id) +
+        "?confirmName=" + encodeURIComponent(pendingDelete.name),
+      { method: "DELETE", headers: key ? { "x-provider-key": key } : {} }
+    )
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        el.deleteGo.textContent = "Xoá vĩnh viễn";
+
+        if (!data.ok) {
+          el.deleteError.textContent = data.error;
+          el.deleteError.hidden = false;
+          el.deleteGo.disabled = false;
+          return;
+        }
+
+        var name = data.deleted;
+        closeDeleteModal();
+        loadSites();
+        el.sitesNote.textContent = 'Đã xoá site "' + name + '".';
+      })
+      .catch(function (error) {
+        el.deleteGo.textContent = "Xoá vĩnh viễn";
+        el.deleteGo.disabled = false;
+        el.deleteError.textContent = "Không xoá được: " + error.message;
+        el.deleteError.hidden = false;
+      });
   }
 
   function loadSites() {
@@ -983,8 +1064,26 @@
     if (event.target.hasAttribute("data-close-modal")) closeModal();
   });
 
+  // Nút Xoá chỉ mở khi tên gõ vào khớp tuyệt đối — server vẫn kiểm lại lần nữa
+  el.deleteConfirm.addEventListener("input", function () {
+    var typed = el.deleteConfirm.value.trim();
+    el.deleteGo.disabled = !pendingDelete || typed !== pendingDelete.name;
+  });
+
+  el.deleteConfirm.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && !el.deleteGo.disabled) runDelete();
+  });
+
+  el.deleteGo.addEventListener("click", runDelete);
+
+  el.deleteModal.addEventListener("click", function (event) {
+    if (event.target.hasAttribute("data-close-delete")) closeDeleteModal();
+  });
+
   document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape" && isModalOpen()) closeModal();
+    if (event.key !== "Escape") return;
+    if (!el.deleteModal.hidden) closeDeleteModal();
+    else if (isModalOpen()) closeModal();
   });
 
   el.siteName.addEventListener("input", function () {

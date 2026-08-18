@@ -671,3 +671,53 @@ body.modal-open { overflow: hidden; }
   .modal { padding: 10px; }
   .modal-box { max-height: 95vh; padding: 14px; }
 }
+
+/* --------------------------- Xoá site ------------------------------ */
+
+.btn-danger {
+  background: var(--fail);
+  color: #fff;
+}
+
+.btn-danger:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.linkish-danger { color: var(--fail); }
+
+.modal-box-sm {
+  height: auto;
+  max-width: 460px;
+  max-height: none;
+  gap: 0;
+}
+
+.modal-box-sm h3 {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+}
+
+.delete-target {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.88rem;
+  word-break: break-all;
+}
+
+.delete-target span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.modal-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
