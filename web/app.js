@@ -31,6 +31,16 @@
     pasteInfo: document.getElementById("paste-info"),
     formatBtn: document.getElementById("format-btn"),
     clearPaste: document.getElementById("clear-paste"),
+    expandBtn: document.getElementById("expand-btn"),
+    previewBtn: document.getElementById("preview-btn"),
+    modal: document.getElementById("code-modal"),
+    modalTabs: document.querySelectorAll(".tab[data-view]"),
+    modalPanels: document.querySelectorAll("[data-view-panel]"),
+    modalArea: document.getElementById("modal-area"),
+    modalGutter: document.getElementById("modal-gutter"),
+    modalFormat: document.getElementById("modal-format"),
+    modalInfo: document.getElementById("modal-info"),
+    previewFrame: document.getElementById("preview-frame"),
     siteName: document.getElementById("site-name"),
     urlPreview: document.getElementById("url-preview"),
     urlSuffix: document.getElementById("url-suffix"),
@@ -249,13 +259,21 @@
     updateDeployState();
   }
 
-  /** Số dòng bên trái ô soạn thảo, vẽ lại mỗi khi nội dung đổi. */
-  function syncGutter() {
-    var lines = el.pasteArea.value.split("\n").length;
-    var numbers = [];
-    for (var i = 1; i <= lines; i++) numbers.push(i);
-    el.gutter.textContent = numbers.join("\n");
-    el.gutter.scrollTop = el.pasteArea.scrollTop;
+  /**
+   * Tab trong ô soạn thảo phải là thụt lề, không phải nhảy sang nút kế tiếp.
+   * @returns {boolean} true nếu đã chèn, để phía gọi biết mà vẽ lại số dòng
+   */
+  function insertTab(event, textarea) {
+    if (event.key !== "Tab") return false;
+    event.preventDefault();
+
+    var start = textarea.selectionStart;
+    var end = textarea.selectionEnd;
+    var value = textarea.value;
+
+    textarea.value = value.slice(0, start) + "  " + value.slice(end);
+    textarea.selectionStart = textarea.selectionEnd = start + 2;
+    return true;
   }
 
   function updatePasteInfo() {
@@ -270,7 +288,7 @@
   }
 
   function onPasteChanged() {
-    syncGutter();
+    renderGutter(el.gutter, el.pasteArea);
     updatePasteInfo();
     updateDeployState();
   }
@@ -283,6 +301,58 @@
       binary += String.fromCharCode(bytes[i]);
     }
     return btoa(binary);
+  }
+
+  /* ------------------- Popup xem full / xem trước ------------------- */
+
+  function renderGutter(gutterEl, textarea) {
+    var lines = textarea.value.split("\n").length;
+    var numbers = [];
+    for (var i = 1; i <= lines; i++) numbers.push(i);
+    gutterEl.textContent = numbers.join("\n");
+    gutterEl.scrollTop = textarea.scrollTop;
+  }
+
+  function setModalView(view) {
+    el.modalTabs.forEach(function (tab) {
+      var active = tab.getAttribute("data-view") === view;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", String(active));
+    });
+    el.modalPanels.forEach(function (panel) {
+      panel.hidden = panel.getAttribute("data-view-panel") !== view;
+    });
+
+    // Nạp lại preview mỗi lần mở tab, để nó luôn khớp code hiện tại
+    if (view === "preview") {
+      el.previewFrame.srcdoc = el.modalArea.value;
+      el.modalInfo.textContent =
+        "Preview chạy trong iframe cách ly, không đọc được dữ liệu của trang này.";
+    } else {
+      el.modalInfo.textContent = "Sửa ở đây thì ô bên ngoài cập nhật theo.";
+    }
+  }
+
+  function openModal(view) {
+    el.modalArea.value = el.pasteArea.value;
+    renderGutter(el.modalGutter, el.modalArea);
+
+    el.modal.hidden = false;
+    document.body.classList.add("modal-open");
+    setModalView(view || "code");
+
+    if (view !== "preview") el.modalArea.focus();
+  }
+
+  function closeModal() {
+    el.modal.hidden = true;
+    document.body.classList.remove("modal-open");
+    // Bỏ nội dung preview để script bên trong ngừng chạy khi đóng popup
+    el.previewFrame.srcdoc = "";
+  }
+
+  function isModalOpen() {
+    return !el.modal.hidden;
   }
 
   /* -------------------------- Nhà cung cấp -------------------------- */
@@ -853,18 +923,8 @@
     el.gutter.scrollTop = el.pasteArea.scrollTop;
   });
 
-  // Tab trong ô soạn thảo phải là thụt lề, không phải nhảy sang nút kế tiếp
   el.pasteArea.addEventListener("keydown", function (event) {
-    if (event.key !== "Tab") return;
-    event.preventDefault();
-
-    var start = el.pasteArea.selectionStart;
-    var end = el.pasteArea.selectionEnd;
-    var value = el.pasteArea.value;
-
-    el.pasteArea.value = value.slice(0, start) + "  " + value.slice(end);
-    el.pasteArea.selectionStart = el.pasteArea.selectionEnd = start + 2;
-    onPasteChanged();
+    if (insertTab(event, el.pasteArea)) onPasteChanged();
   });
 
   el.formatBtn.addEventListener("click", function () {
@@ -876,6 +936,55 @@
   el.clearPaste.addEventListener("click", function () {
     el.pasteArea.value = "";
     onPasteChanged();
+  });
+
+  el.expandBtn.addEventListener("click", function () {
+    openModal("code");
+  });
+
+  el.previewBtn.addEventListener("click", function () {
+    openModal("preview");
+  });
+
+  el.modalTabs.forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      setModalView(tab.getAttribute("data-view"));
+    });
+  });
+
+  // Sửa trong popup thì ô ngoài cập nhật theo, hai bên luôn cùng một nội dung
+  el.modalArea.addEventListener("input", function () {
+    el.pasteArea.value = el.modalArea.value;
+    renderGutter(el.modalGutter, el.modalArea);
+    onPasteChanged();
+  });
+
+  el.modalArea.addEventListener("scroll", function () {
+    el.modalGutter.scrollTop = el.modalArea.scrollTop;
+  });
+
+  el.modalArea.addEventListener("keydown", function (event) {
+    if (insertTab(event, el.modalArea)) {
+      renderGutter(el.modalGutter, el.modalArea);
+      onPasteChanged();
+    }
+  });
+
+  el.modalFormat.addEventListener("click", function () {
+    if (!el.modalArea.value.trim()) return;
+    el.modalArea.value = window.DW.formatHtml(el.modalArea.value);
+    el.pasteArea.value = el.modalArea.value;
+    renderGutter(el.modalGutter, el.modalArea);
+    onPasteChanged();
+  });
+
+  // Bấm nền mờ hoặc nút Đóng đều thoát
+  el.modal.addEventListener("click", function (event) {
+    if (event.target.hasAttribute("data-close-modal")) closeModal();
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && isModalOpen()) closeModal();
   });
 
   el.siteName.addEventListener("input", function () {

@@ -21,8 +21,14 @@ không kéo GitHub vào cuộc.
 Bước 2 có hai tab:
 
 - **Kéo thả file** — thả cả thư mục, đọc đệ quy mọi thư mục con.
-- **Dán code** — ô soạn thảo có số dòng, phím Tab thụt lề, và nút *Định dạng lại*.
-  Nội dung dán vào được deploy thành `index.html`.
+- **Dán code** — ô soạn thảo có số dòng, phím Tab thụt lề, nút *Định dạng lại*, và
+  hai nút mở popup: *Xem full* (ô soạn thảo toàn màn hình) và *Xem trước* (render
+  thử trang). Sửa trong popup thì ô ngoài cập nhật theo. Nội dung dán vào được
+  deploy thành `index.html`.
+
+Preview chạy trong iframe có `sandbox="allow-scripts"` và **cố ý không có**
+`allow-same-origin`. Thiếu chi tiết đó thì script trong HTML bạn dán vào sẽ đọc
+được `localStorage` của công cụ — nơi đang giữ khoá API.
 
 Bộ định dạng nằm ở `web/formatter.js`, tự viết chứ không dùng thư viện ngoài để giữ
 nguyên nguyên tắc không có bước build. Nó cố tình bảo thủ: nội dung trong

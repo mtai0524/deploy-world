@@ -122,6 +122,12 @@ input modes use `data-mode-panel="drop|paste"` and `setMode()`.
 `[{path, content}]` shape with base64 content, so nothing downstream of it knows
 whether the user dropped a folder or pasted into the editor.
 
+The preview iframe runs `sandbox="allow-scripts"` **without** `allow-same-origin`,
+which puts it in an opaque origin. That combination is deliberate and must not be
+loosened: pasted HTML is untrusted code, and API keys live in the `localStorage`
+of this origin. Granting same-origin would hand them over. `closeModal()` clears
+`srcdoc` so scripts in a preview stop running once it is closed.
+
 `web/formatter.js` is a hand-written HTML indenter (loaded before `app.js`, exposed
 as `window.DW.formatHtml`) rather than a dependency, to preserve the no-build-step
 rule. It pulls `pre`/`textarea`/`script`/`style` bodies out behind plain-ASCII

@@ -546,7 +546,8 @@ code {
 
 .editor textarea {
   flex: 1;
-  min-height: 320px;
+  min-height: 180px;
+  max-height: 260px;
   padding: 12px 14px;
   border: 0;
   outline: none;
@@ -573,4 +574,85 @@ code {
 .editor-actions {
   display: flex;
   gap: 8px;
+}
+
+/* ------------------------------ Popup ------------------------------ */
+
+body.modal-open { overflow: hidden; }
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 15, 25, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.modal-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1100px;
+  height: 100%;
+  max-height: 90vh;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Tab trong popup đã có viền dưới riêng của .modal-head nên bỏ viền kép */
+.modal-head .tabs {
+  margin-bottom: 0;
+  border-bottom: 0;
+}
+
+/* Cả hai khung nội dung phải chiếm hết chỗ còn lại của popup */
+.modal-editor,
+#preview-frame {
+  flex: 1;
+  min-height: 0;
+  margin-top: 14px;
+}
+
+.modal-editor textarea {
+  min-height: 0;
+  max-height: none;
+  height: 100%;
+  resize: none;
+}
+
+#preview-frame {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.modal-foot {
+  margin: 10px 0 0;
+}
+
+@media (max-width: 640px) {
+  .modal { padding: 10px; }
+  .modal-box { max-height: 95vh; padding: 14px; }
 }

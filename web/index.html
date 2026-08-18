@@ -95,6 +95,8 @@
         <div class="editor-bar">
           <span class="hint" id="paste-info">Trống</span>
           <span class="editor-actions">
+            <button type="button" class="btn btn-ghost btn-sm" id="expand-btn">Xem full</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="preview-btn">Xem trước</button>
             <button type="button" class="btn btn-ghost btn-sm" id="format-btn">Định dạng lại</button>
             <button type="button" class="btn btn-ghost btn-sm" id="clear-paste">Xoá</button>
           </span>
@@ -206,6 +208,44 @@
       nên công cụ phải commit source lên GitHub trước khi trỏ Render vào đó.
     </p>
   </footer>
+
+  <!-- Popup xem full code / xem trước -->
+  <div class="modal" id="code-modal" hidden role="dialog" aria-modal="true"
+       aria-label="Xem code đầy đủ">
+    <div class="modal-backdrop" data-close-modal></div>
+
+    <div class="modal-box">
+      <div class="modal-head">
+        <div class="tabs" role="tablist">
+          <button type="button" class="tab is-active" data-view="code" role="tab"
+                  aria-selected="true">Code</button>
+          <button type="button" class="tab" data-view="preview" role="tab"
+                  aria-selected="false">Xem trước</button>
+        </div>
+        <div class="editor-actions">
+          <button type="button" class="btn btn-ghost btn-sm" id="modal-format">Định dạng lại</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-close-modal>Đóng</button>
+        </div>
+      </div>
+
+      <div class="editor modal-editor" data-view-panel="code">
+        <div class="gutter" id="modal-gutter" aria-hidden="true">1</div>
+        <textarea id="modal-area" spellcheck="false" autocomplete="off"
+                  autocapitalize="off" autocorrect="off" wrap="off"
+                  aria-label="Mã HTML"></textarea>
+      </div>
+
+      <!--
+        sandbox KHÔNG có allow-same-origin: HTML dán vào là code lạ, mà khoá API
+        đang nằm trong localStorage cùng origin. Thiếu cờ này thì script trong
+        preview đọc được khoá đó.
+      -->
+      <iframe id="preview-frame" data-view-panel="preview" hidden
+              sandbox="allow-scripts" title="Xem trước trang"></iframe>
+
+      <p class="hint modal-foot" id="modal-info"></p>
+    </div>
+  </div>
 
   <script src="formatter.js"></script>
   <script src="app.js"></script>
