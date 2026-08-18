@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deploy World — Đưa source HTML lên hosting</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232f6feb'/><text x='16' y='23' font-family='Arial' font-size='17' font-weight='bold' fill='white' text-anchor='middle'>D</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <span class="logo" aria-hidden="true">D</span>
+      <div>
+        <strong>Deploy World</strong>
+        <span class="sub">Kéo thả source HTML, nhận về một URL chạy được</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Bước 1: chọn nơi deploy -->
+    <section class="panel">
+      <h2><span class="num">1</span> Deploy đi đâu</h2>
+
+      <div class="choices" role="radiogroup" aria-label="Chọn nhà cung cấp hosting">
+        <label class="choice">
+          <input type="radio" name="provider" value="netlify" checked>
+          <span class="choice-body">
+            <strong>Netlify</strong>
+            <span class="choice-note">
+              Nhận file trực tiếp, không cần git. Source không bị đẩy đi đâu khác,
+              không có chuyện repo public hay private. Chỉ cần một token.
+            </span>
+          </span>
+        </label>
+
+        <label class="choice">
+          <input type="radio" name="provider" value="render">
+          <span class="choice-body">
+            <strong>Render</strong>
+            <span class="choice-note">
+              API của Render bắt buộc có git repo, nên công cụ phải commit source lên
+              GitHub trước. Repo phải public, trừ khi bạn đã cài Render GitHub App.
+            </span>
+          </span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Bước 2: chọn file -->
+    <section class="panel">
+      <h2><span class="num">2</span> Chọn source code</h2>
+
+      <div id="dropzone" class="dropzone" tabindex="0" role="button"
+           aria-label="Kéo thả thư mục hoặc file vào đây">
+        <p class="dz-title">Kéo thả cả thư mục vào đây</p>
+        <p class="dz-hint">hoặc bấm để chọn — chỉ cần ít nhất một file <code>.html</code></p>
+        <div class="dz-actions">
+          <button type="button" class="btn btn-ghost" id="pick-folder">Chọn thư mục</button>
+          <button type="button" class="btn btn-ghost" id="pick-files">Chọn file</button>
+        </div>
+      </div>
+
+      <input type="file" id="input-folder" webkitdirectory directory multiple hidden>
+      <input type="file" id="input-files" multiple hidden>
+
+      <div id="filelist" class="filelist" hidden>
+        <div class="filelist-head">
+          <strong id="file-summary"></strong>
+          <button type="button" class="linkish" id="clear-files">Xoá hết</button>
+        </div>
+        <ul id="file-items"></ul>
+      </div>
+    </section>
+
+    <!-- Bước 3: đặt tên -->
+    <section class="panel">
+      <h2><span class="num">3</span> Tên site</h2>
+      <div class="field">
+        <input type="text" id="site-name" placeholder="vi-du-trang-cua-toi" autocomplete="off">
+        <p class="hint">
+          URL sẽ là <code id="url-preview">ten-site</code><code id="url-suffix">.netlify.app</code>
+        </p>
+      </div>
+
+      <div data-provider="render" hidden>
+        <label class="checkbox">
+          <input type="checkbox" id="overwrite-existing">
+          Ghi đè nếu repo cùng tên đã có nội dung
+        </label>
+        <p class="hint">
+          Bỏ trống thì công cụ dừng lại và báo, thay vì thay file trong một repo có sẵn.
+        </p>
+        <label class="checkbox">
+          <input type="checkbox" id="make-public">
+          Chuyển repo sang public nếu đang private
+        </label>
+        <p class="hint warn">
+          Render chỉ fetch được repo public. Tick ô này là <strong>công khai toàn bộ
+          source trong repo đó ra Internet</strong> và không tự hoàn tác được.
+        </p>
+      </div>
+    </section>
+
+    <!-- Bước 4: khoá -->
+    <section class="panel">
+      <h2><span class="num">4</span> Khoá API</h2>
+      <p class="hint" id="creds-note">
+        Khoá chỉ gửi kèm từng lần deploy, server không lưu lại. Trình duyệt nhớ hộ ở localStorage.
+      </p>
+
+      <div data-provider="netlify">
+        <div class="field">
+          <label for="nf-token">Netlify personal access token</label>
+          <input type="password" id="nf-token" placeholder="nfp_..." autocomplete="off">
+          <p class="hint">
+            <a href="https://app.netlify.com/user/applications#personal-access-tokens"
+               target="_blank" rel="noopener">tạo token</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="grid-2" data-provider="render" hidden>
+        <div class="field">
+          <label for="gh-token">GitHub token</label>
+          <input type="password" id="gh-token" placeholder="ghp_..." autocomplete="off">
+          <p class="hint">
+            Scope <code>repo</code> —
+            <a href="https://github.com/settings/tokens/new?scopes=repo&description=Deploy%20World"
+               target="_blank" rel="noopener">tạo token</a>
+          </p>
+        </div>
+        <div class="field">
+          <label for="rd-key">Render API key</label>
+          <input type="password" id="rd-key" placeholder="rnd_..." autocomplete="off">
+          <p class="hint">
+            <a href="https://dashboard.render.com/settings#api-keys"
+               target="_blank" rel="noopener">tạo API key</a>
+          </p>
+        </div>
+      </div>
+
+      <label class="checkbox">
+        <input type="checkbox" id="remember-keys" checked>
+        Nhớ khoá trên trình duyệt này
+      </label>
+    </section>
+
+    <div class="deploy-bar">
+      <button type="button" class="btn btn-primary" id="deploy-btn" disabled>Deploy</button>
+      <span class="hint" id="deploy-hint">Chọn source trước đã</span>
+    </div>
+
+    <section class="panel" id="progress-panel" hidden>
+      <h2>Tiến trình</h2>
+      <ul class="steps" id="steps"></ul>
+      <div id="result" class="result" hidden></div>
+    </section>
+  </main>
+
+  <footer class="wrap foot">
+    <p>
+      Netlify nhận file trực tiếp qua API. Render thì bắt buộc deploy từ git repo,
+      nên công cụ phải commit source lên GitHub trước khi trỏ Render vào đó.
+    </p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "deploy-world",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kéo thả source HTML, tự động deploy lên Render qua GitHub",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

@@ -1,0 +1,19 @@
+# Deploy chính công cụ này lên Render dưới dạng Web Service.
+# (Bản thân nó là Node app nên không dùng static site được.)
+services:
+  - type: web
+    name: deploy-world
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/config
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Để trống thì mỗi người dùng tự nhập key trên giao diện.
+      # sync: false = Render hỏi giá trị khi tạo, không lưu vào file này.
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: RENDER_API_KEY
+        sync: false
