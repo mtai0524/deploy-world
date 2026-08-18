@@ -59,7 +59,13 @@ a function returning that shape, an entry in `PROVIDERS`, and a branch in the tw
 
 `server/lib/` holds one module per external API plus two shared concerns:
 
-- `validate.js` — normalizes uploaded files before anything touches a network
+- `validate.js` — normalizes uploaded files before anything touches a network.
+  Filtering is a **denylist**, not an allowlist: source trees carry every
+  extension imaginable, and an allowlist silently swallows the user's files.
+  Widening it that way raises the stakes on secrets, so `.env`, `id_rsa`,
+  `.pem`/`.key` and friends are blocked outright and reported as a distinct
+  category — publishing a private key to a public site is a different kind of
+  mistake from shipping a `.exe` that will not run.
 - `reachability.js` — provider-agnostic "can a stranger actually see this?"
 
 **Files travel as base64 inside one JSON body.** The browser reads them with the

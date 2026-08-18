@@ -10,17 +10,31 @@ export const LIMITS = {
   maxTotalBytes: 25 * 1024 * 1024,
 };
 
-// Phần mở rộng cho phép. Cố tình không nhận .php/.exe/... vì static site
-// không chạy được chúng, nhận vào chỉ tạo hiểu nhầm.
-const ALLOWED_EXT = new Set([
-  "html", "htm", "css", "js", "mjs", "json", "map", "txt", "md", "xml",
-  "webmanifest", "svg", "png", "jpg", "jpeg", "gif", "webp", "avif", "ico",
-  "bmp", "woff", "woff2", "ttf", "otf", "eot", "mp4", "webm", "mp3", "ogg",
-  "wav", "pdf", "csv", "vtt",
+// Danh sách đen thay vì danh sách trắng: source code có đủ loại đuôi file, chặn
+// theo whitelist thì luôn thiếu và âm thầm nuốt mất file của người dùng.
+//
+// Nhị phân thực thi: hosting tĩnh không chạy được, mà phát tán ra public thì
+// nguy hiểm. Nhóm khoá/chứng chỉ riêng: xem BLOCKED_EXT phần dưới.
+const BINARY_EXT = new Set([
+  "exe", "dll", "msi", "bat", "cmd", "com", "scr", "vbs", "jar", "apk", "app",
+  "so", "dylib", "o", "obj", "pdb", "class", "pyc", "pyo", "node", "bin",
 ]);
 
-// Rác thường thấy khi kéo thả cả thư mục dự án
-const JUNK = /(^|\/)(\.git|node_modules|\.DS_Store|Thumbs\.db|\.env)(\/|$)/i;
+// Khoá riêng và kho chứng chỉ — kéo cả thư mục dự án rất dễ lôi nhầm lên.
+// Tách khỏi BINARY_EXT để báo đúng lý do: đây là vấn đề lộ bí mật, không phải
+// chuyện hosting tĩnh chạy được hay không.
+const SECRET_EXT = new Set(["pem", "key", "p12", "pfx", "keystore", "jks", "ppk"]);
+
+// Rác build/công cụ, không phải nội dung site
+const JUNK = /(^|\/)(\.git|\.svn|\.hg|node_modules|__pycache__|\.venv|venv|\.next|\.nuxt|\.cache|\.idea|\.vscode|\.DS_Store|Thumbs\.db|desktop\.ini)(\/|$)/i;
+
+// File chứa bí mật. .env.example và họ hàng thì vô hại nên cho qua.
+const SECRET_FILE =
+  /(^|\/)(\.env(?!\.(example|sample|template|dist)$)(\..*)?|id_rsa|id_dsa|id_ecdsa|id_ed25519|\.npmrc|\.netrc|\.pypirc|credentials|secrets?\.(json|ya?ml|toml))$/i;
+
+// Dấu hiệu đây là source chưa build, không phải site chạy được
+const NEEDS_BUILD_FILE = /(^|\/)(package\.json|vite\.config\.[jt]s|next\.config\.[jt]s|angular\.json|nuxt\.config\.[jt]s|svelte\.config\.js)$/i;
+const SOURCE_ONLY_EXT = /\.(jsx|tsx|vue|svelte|scss|sass|less|styl|ts)$/i;
 
 const IS_HTML = /\.html?$/i;
 
@@ -98,15 +112,27 @@ export function normalizeFiles(rawFiles) {
   }
 
   const notes = [];
-  const skipped = [];
+  const skippedJunk = [];
+  const skippedSecret = [];
+  const skippedBinary = [];
   const staged = [];
   let totalBytes = 0;
 
   for (const raw of rawFiles) {
     const path = sanitizePath(raw?.path);
 
-    if (JUNK.test(path) || !ALLOWED_EXT.has(extensionOf(path))) {
-      skipped.push(path);
+    if (JUNK.test(path)) {
+      skippedJunk.push(path);
+      continue;
+    }
+    // Tách riêng khỏi nhóm rác: đây là thứ người dùng cần biết đã bị loại,
+    // vì đẩy nhầm lên một site công khai là lộ bí mật thật.
+    if (SECRET_FILE.test(path) || SECRET_EXT.has(extensionOf(path))) {
+      skippedSecret.push(path);
+      continue;
+    }
+    if (BINARY_EXT.has(extensionOf(path))) {
+      skippedBinary.push(path);
       continue;
     }
 
@@ -131,7 +157,7 @@ export function normalizeFiles(rawFiles) {
 
   if (staged.length === 0) {
     throw new ValidationError(
-      "Không có file nào dùng được. Static site chỉ nhận html/css/js/ảnh/font."
+      "Không còn file nào sau khi lọc. Toàn bộ đều là rác build, file bí mật hoặc nhị phân."
     );
   }
 
@@ -141,17 +167,61 @@ export function normalizeFiles(rawFiles) {
     : staged;
 
   if (prefix) notes.push(`Đã bỏ thư mục bọc ngoài "${prefix.slice(0, -1)}".`);
-  if (skipped.length) {
-    const preview = skipped.slice(0, 3).join(", ");
+
+  const summarize = (list) =>
+    list.slice(0, 3).join(", ") + (list.length > 3 ? `... (+${list.length - 3})` : "");
+
+  if (skippedJunk.length) {
+    notes.push(`Bỏ qua ${skippedJunk.length} file rác build: ${summarize(skippedJunk)}`);
+  }
+  if (skippedBinary.length) {
     notes.push(
-      `Bỏ qua ${skipped.length} file không dùng được: ${preview}${skipped.length > 3 ? "..." : ""}`
+      `Bỏ qua ${skippedBinary.length} file nhị phân (hosting tĩnh không chạy được): ${summarize(skippedBinary)}`
     );
   }
+  if (skippedSecret.length) {
+    notes.push(
+      `Đã chặn ${skippedSecret.length} file chứa bí mật, KHÔNG đưa lên: ${summarize(skippedSecret)}`
+    );
+  }
+
+  const buildNote = detectUnbuiltProject(files);
+  if (buildNote) notes.push(buildNote);
 
   const entryNote = ensureEntryPoint(files);
   if (entryNote) notes.push(entryNote);
 
   return { files, notes, totalBytes };
+}
+
+/**
+ * Nhận ra source của framework chưa qua bước build.
+ *
+ * Hosting tĩnh phục vụ file y nguyên, không biên dịch gì. Đẩy thẳng src/App.jsx
+ * lên thì trình duyệt không chạy được và site hỏng — nhưng deploy vẫn "thành
+ * công", nên phải nói trước thay vì để người dùng tự đoán.
+ *
+ * @returns {string|null} ghi chú cảnh báo, null nếu trông như site chạy được
+ */
+function detectUnbuiltProject(files) {
+  const hasConfig = files.some((f) => NEEDS_BUILD_FILE.test(f.path));
+  const sourceFiles = files.filter((f) => SOURCE_ONLY_EXT.test(f.path));
+
+  if (!hasConfig && sourceFiles.length === 0) return null;
+
+  // Đã có sẵn thư mục build thì nhiều khả năng người dùng biết mình làm gì
+  const looksBuilt = files.some((f) => /(^|\/)(dist|build|out|_site)\//i.test(f.path));
+  if (looksBuilt) return null;
+
+  const reason = hasConfig
+    ? "có package.json hoặc file cấu hình build"
+    : `có ${sourceFiles.length} file cần biên dịch (${sourceFiles[0].path})`;
+
+  return (
+    `Cảnh báo: source này ${reason}. Hosting tĩnh phục vụ file y nguyên, không ` +
+    `chạy bước build — nếu trang cần biên dịch thì hãy chạy lệnh build ở máy rồi ` +
+    `kéo thả thư mục kết quả (dist/, build/) thay vì source gốc.`
+  );
 }
 
 /**

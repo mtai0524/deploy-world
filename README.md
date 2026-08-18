@@ -111,8 +111,10 @@ mất khoảng 30 giây để dậy.
 Đặt trong `server/lib/validate.js`:
 
 - Tối đa **200 file**, mỗi file **5MB**, tổng **25MB**
-- Chỉ nhận đuôi tĩnh: html, css, js, json, ảnh, font, media, pdf...
-  File `.php`, `.py`, binary lạ... bị bỏ qua kèm cảnh báo
+- Nhận mọi loại file source (ts, jsx, vue, scss, yaml, file không đuôi...).
+  Dùng danh sách đen chứ không phải danh sách trắng, nên không âm thầm nuốt file.
+- Chặn hẳn file bí mật (`.env`, `id_rsa`, `.pem`, `.key`...) và nhị phân thực thi,
+  báo rõ đã chặn cái gì và vì sao
 - Cần ít nhất một file HTML ở gốc. **Không bắt buộc tên `index.html`** — nếu
   thiếu, công cụ tự chọn trang chủ:
   - Đúng một trang → đổi tên trang đó thành `index.html`
