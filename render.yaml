@@ -11,8 +11,14 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
-      # Để trống thì mỗi người dùng tự nhập key trên giao diện.
+      # Để trống hết thì mỗi người dùng tự nhập khoá trên giao diện.
       # sync: false = Render hỏi giá trị khi tạo, không lưu vào file này.
+
+      # Netlify là nhà cung cấp mặc định, chỉ cần một khoá này là dùng được.
+      - key: NETLIFY_TOKEN
+        sync: false
+
+      # Hai khoá dưới chỉ cần khi dùng nhánh Render (phải đi qua GitHub).
       - key: GITHUB_TOKEN
         sync: false
       - key: RENDER_API_KEY

@@ -83,8 +83,9 @@ Request có khoá thì ưu tiên khoá của request, không có thì rơi về 
 
 1. Push repo lên GitHub.
 2. Render Dashboard → **New** → **Blueprint** → chọn repo (đọc `render.yaml`).
-3. Render hỏi giá trị cho `GITHUB_TOKEN` và `RENDER_API_KEY` — để trống nếu muốn
-   người dùng tự nhập khoá.
+3. Render hỏi giá trị cho `NETLIFY_TOKEN`, `GITHUB_TOKEN` và `RENDER_API_KEY` —
+   để trống hết nếu muốn người dùng tự nhập khoá. Chỉ dùng Netlify thì một
+   `NETLIFY_TOKEN` là đủ.
 
 Free tier của Web Service **ngủ sau 15 phút** không có request, lần gọi kế tiếp
 mất khoảng 30 giây để dậy.
