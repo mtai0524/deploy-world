@@ -520,8 +520,13 @@ code {
 
 /* -------------------------- Ô soạn thảo ---------------------------- */
 
+/* Chiều cao phải cố định ở đây, không để nội dung quyết định. Gutter chứa toàn
+   bộ số dòng, nên nếu khung co giãn theo nội dung thì file 500 dòng sẽ kéo
+   khung dài 500 dòng, còn textarea vẫn bị chặn ở max-height và nằm co lại
+   phía trên. Muốn xem rộng thì dùng nút "Xem full". */
 .editor {
   display: flex;
+  height: 260px;
   border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
@@ -540,6 +545,10 @@ code {
    lệch một chút là số dòng trôi khỏi dòng code tương ứng. */
 .gutter {
   flex: none;
+  /* Flex item mặc định min-height:auto, tức cao bằng nội dung — overflow:hidden
+     một mình không ngăn được nó kéo dài khung. */
+  min-height: 0;
+  height: 100%;
   padding: 12px 10px;
   border-right: 1px solid var(--border);
   background: color-mix(in srgb, var(--border) 30%, transparent);
@@ -554,12 +563,14 @@ code {
 
 .editor textarea {
   flex: 1;
-  min-height: 180px;
-  max-height: 260px;
+  min-height: 0;
+  height: 100%;
   padding: 12px 14px;
   border: 0;
   outline: none;
-  resize: vertical;
+  /* Không cho kéo giãn: gutter cao cố định theo khung, textarea giãn ra là hai
+     bên lệch nhau ngay. */
+  resize: none;
   background: transparent;
   color: var(--text);
   font: inherit;
@@ -634,19 +645,15 @@ body.modal-open { overflow: hidden; }
   border-bottom: 0;
 }
 
-/* Cả hai khung nội dung phải chiếm hết chỗ còn lại của popup */
+/* Cả hai khung nội dung phải chiếm hết chỗ còn lại của popup.
+   height: auto để bỏ chiều cao cố định 260px của .editor — trong popup thì
+   flex mới là thứ quyết định kích thước. */
 .modal-editor,
 #preview-frame {
   flex: 1;
+  height: auto;
   min-height: 0;
   margin-top: 14px;
-}
-
-.modal-editor textarea {
-  min-height: 0;
-  max-height: none;
-  height: 100%;
-  resize: none;
 }
 
 #preview-frame {
