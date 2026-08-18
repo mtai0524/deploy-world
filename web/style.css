@@ -481,3 +481,96 @@ code {
   color: var(--muted);
   background: var(--bg);
 }
+
+/* --------------------------- Tab chế độ ---------------------------- */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  padding: 8px 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab:hover { color: var(--text); }
+
+.tab.is-active {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+
+/* -------------------------- Ô soạn thảo ---------------------------- */
+
+.editor {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: ui-monospace, "Cascadia Code", Consolas, "Courier New", monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.editor:focus-within {
+  border-color: var(--brand);
+  outline: 2px solid color-mix(in srgb, var(--brand) 35%, transparent);
+}
+
+/* Gutter và textarea phải cùng font, cùng line-height, cùng padding dọc —
+   lệch một chút là số dòng trôi khỏi dòng code tương ứng. */
+.gutter {
+  flex: none;
+  padding: 12px 10px;
+  border-right: 1px solid var(--border);
+  background: color-mix(in srgb, var(--border) 30%, transparent);
+  color: var(--muted);
+  text-align: right;
+  white-space: pre;
+  overflow: hidden;
+  user-select: none;
+  font: inherit;
+  line-height: inherit;
+}
+
+.editor textarea {
+  flex: 1;
+  min-height: 320px;
+  padding: 12px 14px;
+  border: 0;
+  outline: none;
+  resize: vertical;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  line-height: inherit;
+  white-space: pre;
+  overflow: auto;
+  tab-size: 2;
+}
+
+.editor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.editor-bar .hint { margin: 0; }
+
+.editor-actions {
+  display: flex;
+  gap: 8px;
+}

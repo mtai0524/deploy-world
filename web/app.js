@@ -23,6 +23,14 @@
     fileItems: document.getElementById("file-items"),
     fileSummary: document.getElementById("file-summary"),
     clearFiles: document.getElementById("clear-files"),
+    modeTabs: document.querySelectorAll(".tab[data-mode]"),
+    modePanels: document.querySelectorAll("[data-mode-panel]"),
+    pastePanel: document.querySelector('[data-mode-panel="paste"]'),
+    pasteArea: document.getElementById("paste-area"),
+    gutter: document.getElementById("editor-gutter"),
+    pasteInfo: document.getElementById("paste-info"),
+    formatBtn: document.getElementById("format-btn"),
+    clearPaste: document.getElementById("clear-paste"),
     siteName: document.getElementById("site-name"),
     urlPreview: document.getElementById("url-preview"),
     urlSuffix: document.getElementById("url-suffix"),
@@ -223,6 +231,60 @@
     renderFiles();
   }
 
+  /* ------------------------- Chế độ dán code ------------------------ */
+
+  function currentMode() {
+    return el.pastePanel && !el.pastePanel.hidden ? "paste" : "drop";
+  }
+
+  function setMode(mode) {
+    el.modeTabs.forEach(function (tab) {
+      var active = tab.getAttribute("data-mode") === mode;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", String(active));
+    });
+    el.modePanels.forEach(function (panel) {
+      panel.hidden = panel.getAttribute("data-mode-panel") !== mode;
+    });
+    updateDeployState();
+  }
+
+  /** Số dòng bên trái ô soạn thảo, vẽ lại mỗi khi nội dung đổi. */
+  function syncGutter() {
+    var lines = el.pasteArea.value.split("\n").length;
+    var numbers = [];
+    for (var i = 1; i <= lines; i++) numbers.push(i);
+    el.gutter.textContent = numbers.join("\n");
+    el.gutter.scrollTop = el.pasteArea.scrollTop;
+  }
+
+  function updatePasteInfo() {
+    var text = el.pasteArea.value;
+    if (!text.trim()) {
+      el.pasteInfo.textContent = "Trống";
+      return;
+    }
+    var bytes = new TextEncoder().encode(text).length;
+    el.pasteInfo.textContent =
+      text.split("\n").length + " dòng · " + humanSize(bytes);
+  }
+
+  function onPasteChanged() {
+    syncGutter();
+    updatePasteInfo();
+    updateDeployState();
+  }
+
+  /** btoa chỉ nhận latin1, nên phải mã hoá UTF-8 thành byte trước. */
+  function textToBase64(text) {
+    var bytes = new TextEncoder().encode(text);
+    var binary = "";
+    for (var i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  }
+
   /* -------------------------- Nhà cung cấp -------------------------- */
 
   var PROVIDERS = {
@@ -286,6 +348,18 @@
   }
 
   function updateDeployState() {
+    if (currentMode() === "paste") {
+      var text = el.pasteArea.value;
+      var hasHtml = /<[a-z!][\s\S]*>/i.test(text);
+
+      el.deployBtn.disabled = !text.trim();
+
+      if (!text.trim()) el.deployHint.textContent = "Dán HTML vào ô bên trên";
+      else if (!hasHtml) el.deployHint.textContent = "Nội dung không có thẻ HTML nào — vẫn deploy được";
+      else el.deployHint.textContent = "Sẵn sàng deploy thành index.html";
+      return;
+    }
+
     var hasFiles = picked.length > 0;
     var pages = rootPages();
     var hasIndex = pages.some(function (item) {
@@ -581,6 +655,25 @@
     );
   }
 
+  /** Gom nguồn file theo chế độ đang chọn, trả về cùng một dạng cho cả hai. */
+  function collectFiles() {
+    if (currentMode() === "paste") {
+      // Server tự đổi tên trang duy nhất thành index.html, nhưng đặt sẵn ở đây
+      // cho khớp với dòng ghi chú hiển thị trên giao diện.
+      return Promise.resolve([
+        { path: "index.html", content: textToBase64(el.pasteArea.value) },
+      ]);
+    }
+
+    return Promise.all(
+      picked.map(function (item) {
+        return readAsBase64(item.file).then(function (content) {
+          return { path: item.path, content: content };
+        });
+      })
+    );
+  }
+
   function deploy() {
     if (polling) clearInterval(polling);
 
@@ -592,17 +685,18 @@
 
     saveCreds();
 
-    var readStep = addStep("Đang đọc " + picked.length + " file...");
+    var pasting = currentMode() === "paste";
+    var readStep = addStep(
+      pasting ? "Đang đóng gói code đã dán..." : "Đang đọc " + picked.length + " file..."
+    );
 
-    Promise.all(
-      picked.map(function (item) {
-        return readAsBase64(item.file).then(function (content) {
-          return { path: item.path, content: content };
-        });
-      })
-    )
+    collectFiles()
       .then(function (files) {
-        finishStep(readStep, "ok", "Đã đọc " + files.length + " file");
+        finishStep(
+          readStep,
+          "ok",
+          pasting ? "Đã đóng gói thành index.html" : "Đã đọc " + files.length + " file"
+        );
         var uploadStep = addStep("Đang gửi file lên hosting...");
 
         return fetch("/api/deploy", {
@@ -748,6 +842,42 @@
     renderFiles();
   });
 
+  el.modeTabs.forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      setMode(tab.getAttribute("data-mode"));
+    });
+  });
+
+  el.pasteArea.addEventListener("input", onPasteChanged);
+  el.pasteArea.addEventListener("scroll", function () {
+    el.gutter.scrollTop = el.pasteArea.scrollTop;
+  });
+
+  // Tab trong ô soạn thảo phải là thụt lề, không phải nhảy sang nút kế tiếp
+  el.pasteArea.addEventListener("keydown", function (event) {
+    if (event.key !== "Tab") return;
+    event.preventDefault();
+
+    var start = el.pasteArea.selectionStart;
+    var end = el.pasteArea.selectionEnd;
+    var value = el.pasteArea.value;
+
+    el.pasteArea.value = value.slice(0, start) + "  " + value.slice(end);
+    el.pasteArea.selectionStart = el.pasteArea.selectionEnd = start + 2;
+    onPasteChanged();
+  });
+
+  el.formatBtn.addEventListener("click", function () {
+    if (!el.pasteArea.value.trim()) return;
+    el.pasteArea.value = window.DW.formatHtml(el.pasteArea.value);
+    onPasteChanged();
+  });
+
+  el.clearPaste.addEventListener("click", function () {
+    el.pasteArea.value = "";
+    onPasteChanged();
+  });
+
   el.siteName.addEventListener("input", function () {
     updateUrlPreview();
     checkNameCollision();
@@ -777,6 +907,7 @@
   loadCreds();
   syncProviderUi(); // phải chạy sau loadCreds vì nó khôi phục lựa chọn đã lưu
   updateUrlPreview();
+  onPasteChanged();
   updateDeployState();
   checkNameCollision();
 

@@ -115,7 +115,19 @@ rather than lingering as a stale entry needing reconciliation.
 
 `web/app.js` is a single vanilla-JS IIFE in ES5 style (`var`, `function`) with no
 build step — keep it that way. Provider-specific UI blocks are marked
-`data-provider="netlify|render"` and toggled by `syncProviderUi()`.
+`data-provider="netlify|render"` and toggled by `syncProviderUi()`; the two source
+input modes use `data-mode-panel="drop|paste"` and `setMode()`.
+
+`collectFiles()` is the seam between those modes — both return the same
+`[{path, content}]` shape with base64 content, so nothing downstream of it knows
+whether the user dropped a folder or pasted into the editor.
+
+`web/formatter.js` is a hand-written HTML indenter (loaded before `app.js`, exposed
+as `window.DW.formatHtml`) rather than a dependency, to preserve the no-build-step
+rule. It pulls `pre`/`textarea`/`script`/`style` bodies out behind plain-ASCII
+tokens before indenting, because whitespace in those elements is either visible or
+load-bearing. Those tokens are uppercase ASCII on purpose: earlier versions used
+control characters and tooling silently corrupted the file.
 
 Regexes for control characters and combining marks use explicit `\uXXXX` escapes
 (`validate.js`, `app.js`). This is deliberate: literal characters in those ranges

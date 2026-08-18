@@ -52,25 +52,54 @@
     <section class="panel">
       <h2><span class="num">2</span> Chọn source code</h2>
 
-      <div id="dropzone" class="dropzone" tabindex="0" role="button"
-           aria-label="Kéo thả thư mục hoặc file vào đây">
-        <p class="dz-title">Kéo thả cả thư mục vào đây</p>
-        <p class="dz-hint">hoặc bấm để chọn — nhận cả thư mục source, chỉ cần có ít nhất một file <code>.html</code></p>
-        <div class="dz-actions">
-          <button type="button" class="btn btn-ghost" id="pick-folder">Chọn thư mục</button>
-          <button type="button" class="btn btn-ghost" id="pick-files">Chọn file</button>
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab is-active" data-mode="drop" role="tab"
+                aria-selected="true">Kéo thả file</button>
+        <button type="button" class="tab" data-mode="paste" role="tab"
+                aria-selected="false">Dán code</button>
+      </div>
+
+      <!-- Chế độ kéo thả -->
+      <div data-mode-panel="drop">
+        <div id="dropzone" class="dropzone" tabindex="0" role="button"
+             aria-label="Kéo thả thư mục hoặc file vào đây">
+          <p class="dz-title">Kéo thả cả thư mục vào đây</p>
+          <p class="dz-hint">hoặc bấm để chọn — nhận cả thư mục source, chỉ cần có ít nhất một file <code>.html</code></p>
+          <div class="dz-actions">
+            <button type="button" class="btn btn-ghost" id="pick-folder">Chọn thư mục</button>
+            <button type="button" class="btn btn-ghost" id="pick-files">Chọn file</button>
+          </div>
+        </div>
+
+        <input type="file" id="input-folder" webkitdirectory directory multiple hidden>
+        <input type="file" id="input-files" multiple hidden>
+
+        <div id="filelist" class="filelist" hidden>
+          <div class="filelist-head">
+            <strong id="file-summary"></strong>
+            <button type="button" class="linkish" id="clear-files">Xoá hết</button>
+          </div>
+          <ul id="file-items"></ul>
         </div>
       </div>
 
-      <input type="file" id="input-folder" webkitdirectory directory multiple hidden>
-      <input type="file" id="input-files" multiple hidden>
-
-      <div id="filelist" class="filelist" hidden>
-        <div class="filelist-head">
-          <strong id="file-summary"></strong>
-          <button type="button" class="linkish" id="clear-files">Xoá hết</button>
+      <!-- Chế độ dán code -->
+      <div data-mode-panel="paste" hidden>
+        <div class="editor">
+          <div class="gutter" id="editor-gutter" aria-hidden="true">1</div>
+          <textarea id="paste-area" spellcheck="false" autocomplete="off"
+                    autocapitalize="off" autocorrect="off" wrap="off"
+                    aria-label="Dán mã HTML vào đây"
+                    placeholder="Dán HTML vào đây rồi bấm Định dạng lại..."></textarea>
         </div>
-        <ul id="file-items"></ul>
+        <div class="editor-bar">
+          <span class="hint" id="paste-info">Trống</span>
+          <span class="editor-actions">
+            <button type="button" class="btn btn-ghost btn-sm" id="format-btn">Định dạng lại</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="clear-paste">Xoá</button>
+          </span>
+        </div>
+        <p class="hint">Nội dung này sẽ được deploy thành <code>index.html</code>.</p>
       </div>
     </section>
 
@@ -178,6 +207,7 @@
     </p>
   </footer>
 
+  <script src="formatter.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

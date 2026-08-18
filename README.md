@@ -16,6 +16,19 @@ Hỗ trợ hai nhà cung cấp. Chọn ngay trên giao diện.
 Nếu không có lý do đặc biệt phải dùng Render, chọn Netlify — nó ít bước hơn và
 không kéo GitHub vào cuộc.
 
+## Hai cách đưa source vào
+
+Bước 2 có hai tab:
+
+- **Kéo thả file** — thả cả thư mục, đọc đệ quy mọi thư mục con.
+- **Dán code** — ô soạn thảo có số dòng, phím Tab thụt lề, và nút *Định dạng lại*.
+  Nội dung dán vào được deploy thành `index.html`.
+
+Bộ định dạng nằm ở `web/formatter.js`, tự viết chứ không dùng thư viện ngoài để giữ
+nguyên nguyên tắc không có bước build. Nó cố tình bảo thủ: nội dung trong
+`pre`/`textarea`/`script`/`style` được tháo ra giữ nguyên trước khi thụt lề, vì
+khoảng trắng ở đó hoặc có ý nghĩa hiển thị hoặc thụt sai sẽ làm hỏng code.
+
 ## Danh sách site đã deploy
 
 Giao diện có mục **Site đã deploy** liệt kê toàn bộ site trong tài khoản của nhà
