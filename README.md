@@ -123,6 +123,21 @@ mất khoảng 30 giây để dậy.
 - Tự bỏ thư mục bọc ngoài khi kéo cả folder (`my-site/index.html` → `index.html`)
 - Tự bỏ rác: `.git/`, `node_modules/`, `.DS_Store`, `.env`
 
+## Trùng tên site
+
+Tên site vừa là tên repo/service vừa là subdomain, nên gõ trùng tên một site đã có
+nghĩa là deploy sẽ **thay toàn bộ nội dung** của site đó.
+
+Công cụ không để chuyện đó xảy ra âm thầm. Có hai lớp:
+
+1. **Báo sớm khi gõ** — giao diện đối chiếu tên đang gõ với danh sách site đã tải
+   và hiện cảnh báo ngay dưới ô nhập, trước cả khi bạn bấm Deploy.
+2. **Chặn ở server** — nếu tên trùng một site đang có nội dung mà chưa bật
+   *"Ghi đè nếu trùng tên"*, request dừng lại trước khi upload bất kỳ file nào.
+
+Lớp 2 mới là lớp bảo vệ thật; lớp 1 chỉ để bạn biết sớm. Danh sách phía client có
+thể cũ hoặc chưa tải, nên không được tin nó để quyết định.
+
 ## Dùng Netlify: project private mặc định
 
 Từ **28/07/2026** Netlify đặt mọi project mới ở chế độ **private** trên gói Free,

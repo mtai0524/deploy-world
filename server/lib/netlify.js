@@ -85,6 +85,9 @@ export async function findSiteByName(token, name) {
     url: match.ssl_url || match.url,
     adminUrl: match.admin_url,
     existed: true,
+    // published_deploy chỉ tồn tại khi site đã deploy thành công ít nhất một
+    // lần — tức đang có nội dung sẽ bị thay nếu deploy đè lên.
+    hasContent: Boolean(match.published_deploy),
   };
 }
 
@@ -97,6 +100,7 @@ export async function createSite(token, name) {
     url: site.ssl_url || site.url,
     adminUrl: site.admin_url,
     existed: false,
+    hasContent: false,
   };
 }
 

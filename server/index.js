@@ -38,6 +38,20 @@ async function deployToNetlify({ body, name, files }) {
   steps.push({ label: `Xác thực Netlify: ${viewer.name || viewer.email}`, ok: true });
 
   const site = await netlify.ensureSite(token, name);
+
+  // Trùng tên với site đang có nội dung nghĩa là deploy này sẽ thay nội dung đó.
+  // Dừng lại hỏi, giống cách xử lý repo GitHub bên nhánh Render.
+  // Chưa upload file nào ở thời điểm này nên dừng ở đây là an toàn.
+  if (site.existed && site.hasContent && !body.overwriteExisting) {
+    const message =
+      `Đã có site tên "${site.name}" (${site.url}) và đang có nội dung. Deploy sẽ ` +
+      `thay toàn bộ nội dung đó. Đổi tên site khác, hoặc bật "Ghi đè nếu trùng tên" ` +
+      `nếu đúng ý bạn.`;
+    const error = new ValidationError(message);
+    error.detail = [message];
+    throw error;
+  }
+
   steps.push({
     label: site.existed ? `Dùng lại site "${site.name}"` : `Tạo site "${site.name}"`,
     ok: true,

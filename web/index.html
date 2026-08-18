@@ -82,16 +82,19 @@
         <p class="hint">
           URL sẽ là <code id="url-preview">ten-site</code><code id="url-suffix">.netlify.app</code>
         </p>
+        <p class="hint warn" id="name-warning" hidden></p>
       </div>
 
+      <label class="checkbox">
+        <input type="checkbox" id="overwrite-existing">
+        Ghi đè nếu trùng tên với site đã có
+      </label>
+      <p class="hint">
+        Bỏ trống thì công cụ dừng lại và báo, thay vì thay nội dung của một site
+        hoặc repo đang có sẵn.
+      </p>
+
       <div data-provider="render" hidden>
-        <label class="checkbox">
-          <input type="checkbox" id="overwrite-existing">
-          Ghi đè nếu repo cùng tên đã có nội dung
-        </label>
-        <p class="hint">
-          Bỏ trống thì công cụ dừng lại và báo, thay vì thay file trong một repo có sẵn.
-        </p>
         <label class="checkbox">
           <input type="checkbox" id="make-public">
           Chuyển repo sang public nếu đang private

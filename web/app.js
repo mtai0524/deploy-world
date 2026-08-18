@@ -10,6 +10,7 @@
   var MAX_LISTED = 100;
 
   var picked = []; // [{ path, file }]
+  var knownSites = []; // danh sach site da tai, dung de canh bao trung ten
   var polling = null;
 
   var el = {
@@ -25,6 +26,7 @@
     siteName: document.getElementById("site-name"),
     urlPreview: document.getElementById("url-preview"),
     urlSuffix: document.getElementById("url-suffix"),
+    nameWarning: document.getElementById("name-warning"),
     providerRadios: document.querySelectorAll('input[name="provider"]'),
     providerSections: document.querySelectorAll("[data-provider]"),
     nfToken: document.getElementById("nf-token"),
@@ -216,6 +218,7 @@
     if (!el.siteName.value) {
       el.siteName.value = guessSiteName(picked);
       updateUrlPreview();
+      checkNameCollision();
     }
     renderFiles();
   }
@@ -247,6 +250,31 @@
 
   function updateUrlPreview() {
     el.urlPreview.textContent = slugify(el.siteName.value) || "ten-site";
+  }
+
+  /**
+   * Báo trước khi bấm Deploy nếu tên vừa gõ trùng một site đã có.
+   * Server vẫn chặn lần nữa — đây chỉ là lớp báo sớm, không thay thế nó.
+   */
+  function checkNameCollision() {
+    var name = slugify(el.siteName.value);
+
+    var clash = name
+      ? knownSites.filter(function (site) {
+          return site.name === name;
+        })[0]
+      : null;
+
+    if (!clash) {
+      el.nameWarning.hidden = true;
+      el.nameWarning.textContent = "";
+      return;
+    }
+
+    el.nameWarning.hidden = false;
+    el.nameWarning.textContent = el.overwrite.checked
+      ? 'Trùng tên với site "' + clash.name + '" đang có. Đã bật ghi đè nên nội dung cũ sẽ bị thay.'
+      : 'Đã có site tên "' + clash.name + '". Deploy sẽ dừng lại trừ khi bạn bật "Ghi đè nếu trùng tên", hoặc đổi sang tên khác.';
   }
 
   // Trang ở gốc, hoặc ngay trong thư mục bọc ngoài (server sẽ bóc lớp đó ra)
@@ -382,6 +410,8 @@
   }
 
   function renderSites(sites) {
+    knownSites = sites;
+    checkNameCollision();
     el.sitesList.innerHTML = "";
 
     if (!sites.length) {
@@ -718,7 +748,12 @@
     renderFiles();
   });
 
-  el.siteName.addEventListener("input", updateUrlPreview);
+  el.siteName.addEventListener("input", function () {
+    updateUrlPreview();
+    checkNameCollision();
+  });
+
+  el.overwrite.addEventListener("change", checkNameCollision);
   el.deployBtn.addEventListener("click", deploy);
 
   el.providerRadios.forEach(function (radio) {
@@ -743,6 +778,7 @@
   syncProviderUi(); // phải chạy sau loadCreds vì nó khôi phục lựa chọn đã lưu
   updateUrlPreview();
   updateDeployState();
+  checkNameCollision();
 
   // Đã có khoá lưu sẵn thì hiện danh sách ngay, khỏi bắt bấm Tải lại
   if (PROVIDERS[currentProvider()].key()) loadSites();
