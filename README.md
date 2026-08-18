@@ -23,6 +23,11 @@ cung cấp đang chọn: tên, URL bấm được, trạng thái, thời điểm
 link tới dashboard. Danh sách tự tải khi đã có khoá, tự làm mới sau mỗi lần deploy
 thành công, và có nút Tải lại.
 
+Mỗi dòng có nhãn **public** hoặc **private**. Nhãn này không lấy từ trạng thái do
+nhà cung cấp báo — `ready` chỉ nói deploy đã xong, không nói khách xem được. Server
+tự mở từng URL **không kèm token**, đúng như một người lạ, rồi báo lại kết quả thật.
+Không kiểm tra được (mạng lỗi, quá hạn) thì hiện *chưa rõ* chứ không đoán bừa.
+
 Dữ liệu lấy trực tiếp từ `GET /sites` (Netlify) và `GET /services?type=static_site`
 (Render) — công cụ không tự lưu danh sách nào, nên site bạn xoá trên dashboard sẽ
 biến mất khỏi đây ngay lần tải lại kế tiếp.

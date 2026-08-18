@@ -453,3 +453,31 @@ code {
 }
 
 .site-meta a { font-size: inherit; }
+
+.badge {
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: help;
+}
+
+.badge-public {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 40%, var(--border));
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+}
+
+.badge-private {
+  color: var(--fail);
+  border-color: color-mix(in srgb, var(--fail) 40%, var(--border));
+  background: color-mix(in srgb, var(--fail) 12%, transparent);
+}
+
+.badge-unknown {
+  color: var(--muted);
+  background: var(--bg);
+}

@@ -389,7 +389,15 @@
       return;
     }
 
-    el.sitesNote.textContent = sites.length + " site trong tài khoản " + currentProvider();
+    var privateCount = sites.filter(function (s) {
+      return s.accessChecked && s.isPublic === false;
+    }).length;
+
+    el.sitesNote.textContent =
+      sites.length + " site trong tài khoản " + currentProvider() +
+      (privateCount
+        ? " — " + privateCount + " site đang private, người lạ chưa xem được"
+        : "");
 
     sites.forEach(function (site) {
       var li = document.createElement("li");
@@ -400,6 +408,24 @@
       var name = document.createElement("strong");
       name.textContent = site.name;
       main.appendChild(name);
+
+      // Trạng thái "ready" không đồng nghĩa khách xem được — server đã tự mở URL
+      // không kèm token để biết chắc, hiện kết quả đó ra đây.
+      var badge = document.createElement("span");
+      if (!site.accessChecked) {
+        badge.className = "badge badge-unknown";
+        badge.textContent = "chưa rõ";
+        badge.title = "Không kiểm tra được (mạng lỗi hoặc quá hạn chờ)";
+      } else if (site.isPublic) {
+        badge.className = "badge badge-public";
+        badge.textContent = "public";
+        badge.title = "Người lạ mở link này xem được";
+      } else {
+        badge.className = "badge badge-private";
+        badge.textContent = "private";
+        badge.title = "Người lạ mở link này bị chặn — vào dashboard bấm Make public";
+      }
+      main.appendChild(badge);
 
       if (site.url) {
         var link = document.createElement("a");

@@ -6,6 +6,7 @@ import { normalizeFiles, slugify, LIMITS, ValidationError } from "./lib/validate
 import * as github from "./lib/github.js";
 import * as render from "./lib/render.js";
 import * as netlify from "./lib/netlify.js";
+import { checkPublicAccess, checkMany } from "./lib/reachability.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -224,17 +225,30 @@ app.get("/api/sites/:provider", async (req, res, next) => {
     const { provider } = req.params;
     const providedKey = req.get("x-provider-key") || "";
 
+    let sites;
+
     if (provider === "netlify") {
       const token = requireKey(providedKey, "NETLIFY_TOKEN", "Netlify token");
-      return res.json({ ok: true, provider, sites: await netlify.listSites(token) });
-    }
-
-    if (provider === "render") {
+      sites = await netlify.listSites(token);
+    } else if (provider === "render") {
       const key = requireKey(providedKey, "RENDER_API_KEY", "Render API key");
-      return res.json({ ok: true, provider, sites: await render.listStaticSites(key) });
+      sites = await render.listStaticSites(key);
+    } else {
+      throw new ValidationError(`Nhà cung cấp "${provider}" không hỗ trợ.`);
     }
 
-    throw new ValidationError(`Nhà cung cấp "${provider}" không hỗ trợ.`);
+    // Trạng thái "ready" chỉ nói deploy xong, không nói khách xem được. Tự mở
+    // từng URL không kèm token để biết site nào thật sự công khai.
+    const access = await checkMany(sites.map((site) => site.url));
+
+    return res.json({
+      ok: true,
+      provider,
+      sites: sites.map((site) => {
+        const result = access.get(site.url) || { checked: false, isPublic: null, status: null };
+        return { ...site, isPublic: result.isPublic, accessChecked: result.checked };
+      }),
+    });
   } catch (error) {
     next(error);
   }
@@ -256,7 +270,7 @@ app.get("/api/deploy/:provider/:siteId/:deployId", async (req, res, next) => {
       // Chỉ kiểm tra khi đã xong, tránh gọi thừa ở mỗi vòng poll
       const access =
         finished && !failed
-          ? await netlify.checkPublicAccess(site.url)
+          ? await checkPublicAccess(site.url)
           : { checked: false, isPublic: null };
 
       return res.json({

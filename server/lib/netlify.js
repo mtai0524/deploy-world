@@ -2,8 +2,10 @@
  * Lớp gọi Netlify API (https://docs.netlify.com/api/get-started).
  *
  * Khác Render, Netlify nhận file trực tiếp nên không cần git repo trung gian.
- * Nhờ vậy không có chuyện repo public/private, và source người dùng không bị
- * đẩy ra chỗ nào khác ngoài chính Netlify.
+ * Nhờ vậy source người dùng không bị đẩy ra chỗ nào khác ngoài chính Netlify.
+ *
+ * Lưu ý: từ 28/07/2026 project mới mặc định private trên gói Free/Personal/Pro.
+ * API công khai chưa có field đổi visibility, xem lib/reachability.js.
  *
  * Luồng: khai báo sha1 của mọi file -> Netlify trả về danh sách file nó chưa
  * có -> upload đúng những file đó -> chờ deploy chuyển sang "ready".
@@ -187,32 +189,6 @@ export async function getDeploy(token, deployId) {
     url: deploy.ssl_url || deploy.deploy_ssl_url || deploy.url || null,
     errorMessage: deploy.error_message || null,
   };
-}
-
-/**
- * Thử truy cập site như một người lạ, không kèm token.
- *
- * Từ 28/07/2026 Netlify đặt project mới ở chế độ private mặc định trên gói
- * Free/Personal/Pro: deploy vẫn thành công nhưng chỉ thành viên team xem được.
- * API công khai chưa có field nào đổi được visibility, nên thay vì đoán, công cụ
- * tự kiểm tra rồi báo cho người dùng biết cần bấm "Make public" trên dashboard.
- */
-export async function checkPublicAccess(url) {
-  if (!url) return { checked: false, isPublic: null, status: null };
-
-  try {
-    const res = await fetch(url, { method: "GET", redirect: "manual" });
-    // Site private trả về 401, hoặc chuyển hướng sang trang đăng nhập Netlify.
-    // Chỉ 2xx mới chắc chắn là người lạ xem được.
-    return {
-      checked: true,
-      isPublic: res.status >= 200 && res.status < 300,
-      status: res.status,
-    };
-  } catch {
-    // Mạng lỗi thì không kết luận gì, tránh báo động giả
-    return { checked: false, isPublic: null, status: null };
-  }
 }
 
 // Trạng thái deploy của Netlify
