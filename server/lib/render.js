@@ -53,6 +53,24 @@ export async function getOwner(key) {
   return { id: first.id, name: first.name, email: first.email };
 }
 
+/** Toàn bộ static site trong workspace, mới cập nhật nhất lên đầu. */
+export async function listStaticSites(key) {
+  const results = await rd(key, "/services?type=static_site&limit=100");
+
+  return (Array.isArray(results) ? results : [])
+    .map((item) => item.service)
+    .filter(Boolean)
+    .map((service) => ({
+      id: service.id,
+      name: service.name,
+      url: service.serviceDetails?.url || null,
+      dashboardUrl: service.dashboardUrl || null,
+      updatedAt: service.updatedAt || service.createdAt || null,
+      state: service.suspended === "suspended" ? "tạm dừng" : "đang chạy",
+    }))
+    .sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+}
+
 /** Tìm service theo tên để lần deploy sau dùng lại thay vì tạo trùng. */
 export async function findServiceByName(key, name) {
   const results = await rd(key, `/services?name=${encodeURIComponent(name)}&limit=20`);

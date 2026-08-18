@@ -54,6 +54,23 @@ export async function getViewer(token) {
   return { id: user.id, email: user.email, name: user.full_name || user.slug };
 }
 
+/** Toàn bộ site trong tài khoản, mới cập nhật nhất lên đầu. */
+export async function listSites(token) {
+  const sites = await nf(token, "/sites?per_page=100");
+
+  return (Array.isArray(sites) ? sites : [])
+    .map((site) => ({
+      id: site.id,
+      name: site.name,
+      url: site.ssl_url || site.url,
+      adminUrl: site.admin_url,
+      // published_deploy chỉ có khi site đã deploy thành công ít nhất một lần
+      updatedAt: site.published_deploy?.published_at || site.updated_at || null,
+      state: site.published_deploy ? site.published_deploy.state : "chưa deploy",
+    }))
+    .sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+}
+
 /** Tìm site theo tên trong tài khoản, null nếu chưa có. */
 export async function findSiteByName(token, name) {
   const sites = await nf(token, `/sites?name=${encodeURIComponent(name)}&per_page=100`);

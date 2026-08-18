@@ -218,6 +218,28 @@ app.post("/api/deploy", async (req, res, next) => {
   }
 });
 
+/** Danh sách site đã deploy, để giao diện hiển thị lại cho người dùng. */
+app.get("/api/sites/:provider", async (req, res, next) => {
+  try {
+    const { provider } = req.params;
+    const providedKey = req.get("x-provider-key") || "";
+
+    if (provider === "netlify") {
+      const token = requireKey(providedKey, "NETLIFY_TOKEN", "Netlify token");
+      return res.json({ ok: true, provider, sites: await netlify.listSites(token) });
+    }
+
+    if (provider === "render") {
+      const key = requireKey(providedKey, "RENDER_API_KEY", "Render API key");
+      return res.json({ ok: true, provider, sites: await render.listStaticSites(key) });
+    }
+
+    throw new ValidationError(`Nhà cung cấp "${provider}" không hỗ trợ.`);
+  } catch (error) {
+    next(error);
+  }
+});
+
 /** Giao diện gọi liên tục endpoint này để theo dõi tiến độ build. */
 app.get("/api/deploy/:provider/:siteId/:deployId", async (req, res, next) => {
   try {

@@ -16,6 +16,17 @@ Hỗ trợ hai nhà cung cấp. Chọn ngay trên giao diện.
 Nếu không có lý do đặc biệt phải dùng Render, chọn Netlify — nó ít bước hơn và
 không kéo GitHub vào cuộc.
 
+## Danh sách site đã deploy
+
+Giao diện có mục **Site đã deploy** liệt kê toàn bộ site trong tài khoản của nhà
+cung cấp đang chọn: tên, URL bấm được, trạng thái, thời điểm deploy gần nhất và
+link tới dashboard. Danh sách tự tải khi đã có khoá, tự làm mới sau mỗi lần deploy
+thành công, và có nút Tải lại.
+
+Dữ liệu lấy trực tiếp từ `GET /sites` (Netlify) và `GET /services?type=static_site`
+(Render) — công cụ không tự lưu danh sách nào, nên site bạn xoá trên dashboard sẽ
+biến mất khỏi đây ngay lần tải lại kế tiếp.
+
 ## Vì sao Render lại rắc rối hơn
 
 Render **không có API upload file**. Endpoint `POST /v1/services` bắt buộc có

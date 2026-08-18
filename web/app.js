@@ -39,6 +39,9 @@
     progressPanel: document.getElementById("progress-panel"),
     steps: document.getElementById("steps"),
     result: document.getElementById("result"),
+    refreshSites: document.getElementById("refresh-sites"),
+    sitesNote: document.getElementById("sites-note"),
+    sitesList: document.getElementById("sites-list"),
   };
 
   /* ------------------------- Tiện ích chung ------------------------- */
@@ -363,6 +366,100 @@
     }
   }
 
+  /* ----------------------- Danh sách site --------------------------- */
+
+  function formatDate(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  function renderSites(sites) {
+    el.sitesList.innerHTML = "";
+
+    if (!sites.length) {
+      el.sitesNote.textContent = "Chưa có site nào trong tài khoản này.";
+      return;
+    }
+
+    el.sitesNote.textContent = sites.length + " site trong tài khoản " + currentProvider();
+
+    sites.forEach(function (site) {
+      var li = document.createElement("li");
+
+      var main = document.createElement("div");
+      main.className = "site-main";
+
+      var name = document.createElement("strong");
+      name.textContent = site.name;
+      main.appendChild(name);
+
+      if (site.url) {
+        var link = document.createElement("a");
+        link.href = site.url;
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.textContent = site.url.replace(/^https?:\/\//, "");
+        main.appendChild(link);
+      }
+
+      var meta = document.createElement("div");
+      meta.className = "site-meta";
+
+      var when = formatDate(site.updatedAt);
+      meta.textContent = [site.state, when].filter(Boolean).join(" · ");
+
+      var dash = site.adminUrl || site.dashboardUrl;
+      if (dash) {
+        var dashLink = document.createElement("a");
+        dashLink.href = dash;
+        dashLink.target = "_blank";
+        dashLink.rel = "noopener";
+        dashLink.textContent = "dashboard";
+        meta.appendChild(document.createTextNode(" · "));
+        meta.appendChild(dashLink);
+      }
+
+      li.appendChild(main);
+      li.appendChild(meta);
+      el.sitesList.appendChild(li);
+    });
+  }
+
+  function loadSites() {
+    var provider = currentProvider();
+    var key = PROVIDERS[provider].key();
+
+    el.sitesList.innerHTML = "";
+
+    // Không có khoá thì server vẫn có thể dùng khoá mặc định của nó, cứ thử gọi
+    el.sitesNote.textContent = "Đang tải...";
+
+    fetch("/api/sites/" + provider, {
+      headers: key ? { "x-provider-key": key } : {},
+    })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data.ok) {
+          el.sitesNote.textContent = data.error;
+          return;
+        }
+        renderSites(data.sites || []);
+      })
+      .catch(function (error) {
+        el.sitesNote.textContent = "Không tải được danh sách: " + error.message;
+      });
+  }
+
   /* ---------------------------- Deploy ------------------------------ */
 
   function pollDeploy(provider, siteId, deployId, key, stepEl) {
@@ -529,6 +626,8 @@
               reportSuccess(data, final);
             }
             el.deployBtn.disabled = false;
+
+            loadSites(); // site vua deploy xuat hien ngay trong danh sach
           }
         );
       })
@@ -597,7 +696,19 @@
   el.deployBtn.addEventListener("click", deploy);
 
   el.providerRadios.forEach(function (radio) {
-    radio.addEventListener("change", syncProviderUi);
+    radio.addEventListener("change", function () {
+      syncProviderUi();
+      loadSites();
+    });
+  });
+
+  el.refreshSites.addEventListener("click", loadSites);
+
+  // Nhập xong khoá thì tải luôn danh sách, khỏi phải bấm Tải lại
+  [el.nfToken, el.rdKey].forEach(function (input) {
+    input.addEventListener("change", function () {
+      if (input.value) loadSites();
+    });
   });
 
   /* --------------------------- Khởi động ---------------------------- */
@@ -606,6 +717,9 @@
   syncProviderUi(); // phải chạy sau loadCreds vì nó khôi phục lựa chọn đã lưu
   updateUrlPreview();
   updateDeployState();
+
+  // Đã có khoá lưu sẵn thì hiện danh sách ngay, khỏi bắt bấm Tải lại
+  if (PROVIDERS[currentProvider()].key()) loadSites();
 
   // Server có sẵn key thì đổi lời nhắc, không bắt người dùng phải nhập
   fetch("/api/config")

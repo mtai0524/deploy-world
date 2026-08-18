@@ -404,3 +404,52 @@ code {
   font-size: 0.85rem;
   line-height: 1.5;
 }
+
+/* ------------------------ Danh sách site --------------------------- */
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel-head h2 { margin-bottom: 14px; }
+
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 0.85rem;
+}
+
+.sites {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sites li {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.sites li:first-child { border-top: 0; }
+
+.site-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.site-main a {
+  font-size: 0.9rem;
+  word-break: break-all;
+}
+
+.site-meta {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.site-meta a { font-size: inherit; }
