@@ -28,6 +28,14 @@
 
 * { box-sizing: border-box; }
 
+/* Thuộc tính hidden chỉ được trình duyệt cài đặt bằng `display: none` ở mức UA
+   stylesheet, nên BẤT KỲ display nào do ta viết ra cũng đè lên nó.
+   Thiếu dòng này thì `.modal { display: flex }` làm popup hiện ngay khi tải
+   trang và bấm Đóng không có tác dụng, còn `.grid-2 { display: grid }` khiến ô
+   khoá Render vẫn hiện khi đang chọn Netlify.
+   Đặt ở đây để mọi phần tử dùng hidden về sau đều an toàn. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background: var(--bg);
