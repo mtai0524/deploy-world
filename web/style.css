@@ -1,28 +1,34 @@
+/* Tông hồng. Sắc độ chọn theo độ tương phản chứ không chỉ theo mắt:
+   --brand trên nền trắng đạt 4.82:1, --muted 5.15:1, cả hai vượt ngưỡng AA cho
+   chữ nhỏ. Sắc hồng tươi hơn (#d63384) chỉ được đúng 4.50:1 — sát mép quá, nên
+   chọn đậm hơn một bậc để còn biên. */
 :root {
-  --bg: #f6f8fb;
+  --bg: #fdf4f8;
   --panel: #ffffff;
-  --border: #e2e8f0;
-  --text: #16202f;
-  --muted: #63718a;
-  --brand: #2f6feb;
-  --brand-dark: #1f4fb0;
-  --ok: #15803d;
-  --fail: #c0332e;
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 8px 24px rgba(16, 24, 40, 0.06);
+  --border: #f3d9e5;
+  --text: #33202a;
+  --muted: #8a6274;
+  --brand: #cf2f7d;
+  --brand-dark: #a82563;
+  --ok: #12855c;
+  /* Đỏ lỗi phải lệch hẳn khỏi hồng thương hiệu, nếu không nhãn "private" và
+     nút "Xoá" sẽ trông như cùng một màu với nút chính. */
+  --fail: #d92d20;
+  --shadow: 0 1px 2px rgba(120, 40, 80, 0.06), 0 8px 24px rgba(120, 40, 80, 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d1117;
-    --panel: #151b24;
-    --border: #262e3b;
-    --text: #e6ecf5;
-    --muted: #93a1b8;
-    --brand: #6c9bff;
-    --brand-dark: #8fb4ff;
+    --bg: #171014;
+    --panel: #21161d;
+    --border: #3a2531;
+    --text: #f8ecf2;
+    --muted: #c49bad;
+    --brand: #ff92c6;
+    --brand-dark: #ffb5d8;
     --ok: #4ade80;
-    --fail: #f87171;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+    --fail: #ff8080;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 24px rgba(0, 0, 0, 0.4);
   }
 }
 
@@ -80,10 +86,11 @@ code {
   place-items: center;
   width: 36px;
   height: 36px;
-  border-radius: 10px;
-  background: var(--brand);
+  border-radius: 11px;
+  background: linear-gradient(135deg, #ff7ab8, var(--brand));
   color: #fff;
   font-weight: 700;
+  box-shadow: 0 3px 10px rgba(207, 47, 125, 0.32);
 }
 
 .topbar strong { display: block; }
@@ -274,11 +281,11 @@ code {
 }
 
 .btn-primary {
-  background: var(--brand);
+  background: linear-gradient(135deg, #ec4899, var(--brand));
   color: #fff;
 }
 
-.btn-primary:hover:not(:disabled) { background: var(--brand-dark); }
+.btn-primary:hover:not(:disabled) { background: var(--brand-dark); box-shadow: 0 4px 14px rgba(207, 47, 125, 0.32); }
 
 .btn:disabled {
   opacity: 0.5;
@@ -612,7 +619,7 @@ body.modal-open { overflow: hidden; }
 .modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(10, 15, 25, 0.55);
+  background: rgba(60, 20, 42, 0.5);
   backdrop-filter: blur(2px);
 }
 
